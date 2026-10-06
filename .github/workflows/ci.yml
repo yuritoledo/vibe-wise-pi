@@ -1,0 +1,37 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run check
+      - run: python3 -B -m unittest discover -s tests -p "test_*.py" -v
+      - run: npm run pack:check
+      - name: Smoke test packed Pi package
+        run: |
+          tarball=$(npm pack --silent)
+          install_dir=$(mktemp -d)
+          npm install --prefix "$install_dir" "$PWD/$tarball"
+          output=$(PI_CODING_AGENT_DIR="$install_dir/pi" npx --no-install pi \
+            -e "$install_dir/node_modules/@yuritoledo/vibe-wise-pi" \
+            --offline --verbose --list-models __package_smoke_test__ 2>&1)
+          echo "$output"
+          ! grep -q "Extension errors" <<< "$output"
