@@ -1,0 +1,65 @@
+{
+  "name": "@yuritoledo/vibe-wise-pi",
+  "version": "0.1.0",
+  "description": "A learning-first coding workflow for Pi and Claude Code.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Noah Kim",
+  "contributors": [
+    "Yuri Toledo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuritoledo/vibe-wise-pi.git"
+  },
+  "homepage": "https://github.com/yuritoledo/vibe-wise-pi#readme",
+  "bugs": {
+    "url": "https://github.com/yuritoledo/vibe-wise-pi/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "learning",
+    "architecture",
+    "engineering"
+  ],
+  "files": [
+    "extensions/",
+    "hooks/",
+    "skills/",
+    "assets/",
+    "LICENSE",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/vibe-wise/index.ts"
+    ],
+    "skills": [
+      "./skills/learn",
+      "./skills/reset"
+    ],
+    "image": "https://raw.githubusercontent.com/yuritoledo/vibe-wise-pi/main/assets/vibewise-icon.png"
+  },
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
+    "pack:check": "npm pack --dry-run"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "latest",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
