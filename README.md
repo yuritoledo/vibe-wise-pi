@@ -1,37 +1,59 @@
 <img src=".claude-plugin/icon.svg" alt="VibeWise brain with code brackets" width="96" height="96">
 
-# VibeWise
+# VibeWise for Pi
 
 **You build. AI writes.**
 
-A Claude Code plugin that puts learning first and keeps you in control while AI writes the code you designed. Claude **asks for your approach first**, helps you examine tradeoffs, and explains unfamiliar concepts. You shape the design and decide when it's ready to implement. Claude writes the code, then explains what it changed and why.
+VibeWise is a learning-first coding workflow for [Pi](https://pi.dev) and Claude
+Code. The coding agent asks for your approach first, helps you examine tradeoffs,
+and explains unfamiliar concepts. You shape the design and decide when it is ready
+to implement. The coding agent writes the agreed code, then explains what changed.
 
-For anyone who wants to learn as they build—whether you're an aspiring engineer, a junior developer, or an experienced engineer exploring an unfamiliar stack. Practice planning how the pieces fit together, anticipating failures, and checking the result while keeping ownership of the decisions.
+This repository is an unofficial Pi port of
+[nykooi1/vibe-wise](https://github.com/nykooi1/vibe-wise). It keeps the upstream
+Claude Code plugin and adds native Pi lifecycle support. Both hosts use the same
+local `.vibe-wise/` project state.
 
-## Get started
+For anyone who wants to learn as they build—whether you are an aspiring engineer,
+a junior developer, or an experienced engineer exploring an unfamiliar stack.
+Practice planning how the pieces fit together, anticipating failures, and checking
+the result while keeping ownership of the decisions.
 
-You need [Claude Code](https://code.claude.com/docs/en/setup) and
-[Python 3](https://www.python.org/downloads/). VibeWise uses Python to restore
-learning context and reset learning notes. No extra Python packages are needed.
+## Install for Pi
 
-VibeWise has been approved for Anthropic's Claude directory, but isn't listed in
-the public community marketplace yet. I expect it to appear soon. In the meantime,
-install it in Claude Code through my GitHub marketplace:
+You need [Pi](https://pi.dev) and [Python 3](https://www.python.org/downloads/).
+Python runs the confirmed reset helper. It needs no extra Python packages.
 
-Run these commands **one at a time** in Claude Code. First, add the marketplace:
+Install the public package from npm:
 
-```text
-/plugin marketplace add nykooi1/vibe-wise
+```sh
+pi install npm:@yuritoledo/vibe-wise-pi
 ```
 
-After it finishes, install the plugin:
+Start Pi in the project you want to work on, then run:
+
+```text
+/skill:learn
+```
+
+To start that project's learning state again from a confirmed backup, run:
+
+```text
+/skill:reset
+```
+
+## Install for Claude Code
+
+The original Claude Code plugin remains available in this fork. Run these commands
+one at a time in Claude Code:
+
+```text
+/plugin marketplace add yuritoledo/vibe-wise-pi
+```
 
 ```text
 /plugin install vibe-wise@vibe-wise
 ```
-
-**Enable automatic updates:** open `/plugin` → **Marketplaces** → **vibe-wise** →
-**Enable auto-update**. This is off by default for third-party marketplaces.
 
 Restart Claude Code in the project you want to work on, then run:
 
@@ -39,7 +61,14 @@ Restart Claude Code in the project you want to work on, then run:
 /vibe-wise:learn
 ```
 
-Setup asks one question at a time. Use the arrow keys and Enter for choices; pick **Use defaults** to skip preference setup. Then ask Claude to build something. Starting fresh or joining an unfamiliar repository both work. For an existing repository, Claude first inspects the code and sketches a small system map.
+For the upstream marketplace and release stream, use the
+[original project](https://github.com/nykooi1/vibe-wise).
+
+Setup asks one question at a time. Use the arrow keys and Enter for choices; pick
+**Use defaults** to skip preference setup. Then ask the coding agent to build
+something. Starting fresh or joining an unfamiliar repository both work. For an
+existing repository, the coding agent first inspects the code and sketches a small
+system map.
 
 ## What it feels like
 
@@ -196,35 +225,46 @@ are with the stack. Checkpoint frequency—Light, Normal, or Frequent—is separ
 - “Focus on backend architecture.”
 - “Use multiple-choice questions.”
 - “Just implement this one.”
-- “Pause learning.” Resume with `/vibe-wise:learn`.
+- “Pause learning.” Resume with `/skill:learn` in Pi or `/vibe-wise:learn` in Claude Code.
 
-Preferences, learning notes, and a project map live in `.vibe-wise/` in your project. Learning mode resumes in future sessions and after compaction. Add `.vibe-wise/` to your `.gitignore` to keep your notes out of Git; the plugin won't change it silently.
+Preferences, learning notes, and a project map live in `.vibe-wise/` in your project.
+Learning mode resumes in future sessions and after compaction. Add `.vibe-wise/` to
+your `.gitignore` to keep your notes out of Git; VibeWise will not change it silently.
 
-No extra account, backend, or telemetry. Saved notes are included in Claude's context, so your normal Claude Code data settings still apply.
+No extra account, backend, or telemetry. Saved notes enter the coding agent's context,
+so the data settings of your selected model provider and host apply.
 
-To start learning this project from scratch, run `/vibe-wise:reset`. It shows the
-project and asks **Cancel / Reset learning**. After confirmation, it backs up your
-profile, progress, and project map inside the notes directory's `backups/` folder,
-then restarts onboarding. Source code and other projects stay untouched. To change
-your experience level or preferences, just tell Claude; no reset is needed.
+To start learning this project from scratch, run `/skill:reset` in Pi or
+`/vibe-wise:reset` in Claude Code. It shows the project and asks **Cancel / Reset
+learning**. After confirmation, it backs up your profile, progress, and project map
+inside the notes directory's `backups/` folder, then restarts onboarding. Source code
+and other projects stay untouched. To change your experience level or preferences,
+just tell the coding agent; no reset is needed.
 
 ## Updating
 
-For automatic updates, open `/plugin` → **Marketplaces** → **vibe-wise** →
-**Enable auto-update**. Auto-update is off by default for third-party marketplaces.
-Claude Code notifies you after an update; restart Claude Code to load the new version.
+Update the Pi package with:
 
-To update manually, run these in your terminal:
+```sh
+pi update --extensions
+```
+
+Run `pi list` to check the installed package. Your project learning notes stay intact;
+no reset is needed.
+
+For Claude Code automatic updates, open `/plugin` → **Marketplaces** → **vibe-wise** →
+**Enable auto-update**. To update manually, run:
 
 ```sh
 claude plugin marketplace update vibe-wise
 claude plugin update vibe-wise@vibe-wise
 ```
 
-Then restart Claude Code. Your project learning notes stay intact; no reset is needed.
-Run `claude plugin list` to check the installed version.
-[More about plugin updates](https://code.claude.com/docs/en/discover-plugins#keep-plugins-updated).
+Restart Claude Code after an update. Run `claude plugin list` to check the installed
+version. See the [Claude Code plugin update documentation](https://code.claude.com/docs/en/discover-plugins#keep-plugins-updated).
 
-## License
+## License and attribution
 
-[MIT](LICENSE). You can use, modify, and share this software, including commercially. Keep the license notice with copies. The software comes without a warranty.
+This project is a derivative of [VibeWise](https://github.com/nykooi1/vibe-wise) by
+Noah Kim. It remains available under the [MIT License](LICENSE). Keep the copyright
+and license notice with copies. The software comes without a warranty.

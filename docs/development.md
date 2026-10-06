@@ -1,18 +1,33 @@
 # Development
 
-V1 uses Claude Code skills, Markdown instructions, one read-only Python hook,
-and a small Python helper for confirmed learning resets.
-There are no packages to install. Python 3.8+ is sufficient for the hook and tests.
+The package keeps the upstream Claude Code plugin and adds a native TypeScript Pi
+extension. Both hosts share the Agent Skills and `.vibe-wise/` state format. The
+Claude hook and confirmed reset helper require Python 3.8+. Pi loads the TypeScript
+extension directly from the package.
 
 ## Local checks
 
+Install development dependencies once:
+
 ```sh
+npm ci
+```
+
+Run all automated checks:
+
+```sh
+npm run check
+python3 -B -m unittest discover -s tests -p "test_*.py" -v
+npm run pack:check
 claude plugin validate .claude-plugin/plugin.json
 claude plugin validate .claude-plugin/marketplace.json
 claude plugin validate skills
-python3 -B -m unittest discover -s tests -v
 git diff --check
 ```
+
+The TypeScript tests exercise Pi state discovery, lifecycle restoration, Git
+boundaries, paused profiles, symlink rejection, and constant-size restoration
+instructions. The Python tests continue to verify the Claude hook and reset helper.
 
 The tests execute the registered hook command with real JSON stdin in temporary
 projects. They cover activation, restoration, partial onboarding, paused mode,
@@ -25,6 +40,31 @@ repository boundaries, nearest-state selection, and symlink rejection.
 Reset tests cover read-only preview, confirmed backup/reset, stale confirmation,
 legacy and partial notes, nested projects, repeated backups, rejected symlinks,
 backup/write failures, and restoring incomplete onboarding after reset.
+
+## Pi smoke tests
+
+Test the package source without adding a persistent install:
+
+```sh
+pi -e .
+```
+
+Run `/skill:learn` in a temporary project. Complete onboarding, confirm that all
+three notes exist, exit Pi, and start Pi again with `pi -e .`. Confirm that Pi
+restores the active profile before it changes application code.
+
+Run `/compact` and navigate the session tree. Confirm that pending decisions remain
+pending. Pause learning and restart. Confirm that restoration does not reactivate it.
+
+Run `/skill:reset`. Confirm that preview changes no files, non-interactive use stops
+without confirmation, cancellation changes no files, and explicit interactive
+confirmation creates a backup before fresh onboarding.
+
+After publication, repeat the smoke test with the registry package:
+
+```sh
+pi -e npm:@yuritoledo/vibe-wise-pi@0.1.0
+```
 
 ## Conversation smoke tests
 
