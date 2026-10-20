@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -170,4 +172,38 @@ test("does not inject context for inactive projects", async () => {
 
   assert.equal(result, undefined);
   assert.equal(extension.sent.length, 0);
+});
+
+
+test("Pi restores shared onboarding for a fresh worktree without creating local notes", async (t) => {
+  const { mkdtemp, rm, access } = await import("node:fs/promises");
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "vibe-wise-shared-")));
+  const previous = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = path.join(root, "config");
+  t.after(async () => {
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    await rm(root, { recursive: true, force: true });
+  });
+  const repo = path.join(root, "repo");
+  const worktree = path.join(root, "worktree");
+  execFileSync("git", ["init", "-q", repo]);
+  execFileSync("git", ["-C", repo, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--allow-empty", "-qm", "init"]);
+  execFileSync("git", ["-C", repo, "worktree", "add", "-qb", "topic", worktree]);
+  const key = createHash("sha256").update(await realpath(path.join(repo, ".git"))).digest("hex");
+  const shared = path.join(process.env.XDG_CONFIG_HOME, "vibe-wise");
+  const project = path.join(shared, "projects", key);
+  await mkdir(project, { recursive: true });
+  await writeFile(path.join(shared, "profile.md"), "Onboarding: complete\nOverall programming: Advanced\n");
+  await writeFile(path.join(project, "project.md"), "Learning mode: active\nOnboarding: complete\n");
+  const extension = harness();
+  await extension.handlers.get("session_start")?.({}, context(worktree));
+  const result = await extension.handlers.get("before_agent_start")?.({}, context(worktree)) as { message?: { content: string } };
+  assert.ok(result?.message?.content.includes(path.join(shared, "profile.md")));
+  assert.ok(result?.message?.content.includes(path.join(project, "project-map.md")));
+  assert.ok(result?.message?.content.includes(path.join(worktree, ".vibe-wise", "progress.md")));
+  await assert.rejects(access(path.join(worktree, ".vibe-wise")));
+  await writeFile(path.join(project, "project.md"), "Learning mode: paused\n");
+  await extension.handlers.get("session_tree")?.({}, context(worktree));
+  assert.equal(await extension.handlers.get("before_agent_start")?.({}, context(worktree)), undefined);
 });

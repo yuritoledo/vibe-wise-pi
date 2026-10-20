@@ -6,47 +6,36 @@ disable-model-invocation: true
 
 # VibeWise Learn mode
 
-Activate learning mode in the main conversation. Read [behavior.md](behavior.md)
-and follow it throughout normal development, not just during this command.
-The learner owns the design. Ask for their approach and wait. Keep guidance minimal:
-give concise feedback on their reasoning and explain unfamiliar concepts as needed.
-Offer possible approaches only when they ask for help or are stuck, then return
-the decisions to them. Learning and learner control take priority over build speed.
-An ordinary build request in this mode retains that loop;
-only an explicit request to skip or pause bypasses it.
-Do not switch to a subagent or require manual coding by default.
+- Activate learning mode in the main conversation. Read [behavior.md](behavior.md) and follow it throughout development.
+- Ask for the learner's approach and wait. Give concise feedback on their reasoning. Explain unfamiliar concepts as needed.
+- Offer approaches when they ask for help or are stuck. Return decisions to them.
+- An ordinary build request retains this loop. Only an explicit request to skip or pause bypasses it.
+- Do not switch to a subagent or require manual coding by default.
+- Use the host's file reader for package guides. Discover optional state files before reading them. Missing files are normal setup, not an error.
 
-Use the host's file-reading tool for package guides instead of printing them with a
-shell command. Use the host's file-search tool to discover optional learner-state files. A missing
-`.vibe-wise/` directory is normal first-time setup, not an error. If a shell
-check is necessary, handle absence with an explicit conditional that succeeds;
-don't run `ls` on a possibly missing directory or hide actual read failures.
-Keep guide reads separate from optional state checks so a missing file doesn't
-make a successful instruction read look like a failed tool call.
+## Resolve state
 
-## Locate state
+1. Resolve `../../hooks/state.py` from this skill directory. Run the read-only resolver with the user's absolute working directory, safely quoted:
 
-Starting at the current working directory, look upward for `.vibe-wise/` or legacy
-`.sensible-vibes/`, preferring `.vibe-wise/` when both exist at the same level,
-stopping at the nearest `.git` directory or file (including a worktree root).
-Use the nearest existing state directory within that boundary. Keep using legacy
-notes in place; never merge, move, or reset them automatically. If there is none,
-create `.vibe-wise/` at the Git root, or current directory without Git. Do not use
-state from a parent repository, another worktree, or the installed plugin folder.
-Do not follow symlinked state directories or files; explain the issue instead.
+   ```sh
+   python3 -B "<absolute package directory>/hooks/state.py" --cwd "<absolute working directory>"
+   ```
 
-If `profile.md` exists, read it and `project-map.md`. Search the entire `progress.md`
-for pending decisions, then read their complete sections and other topics relevant
-to the task. An initial excerpt is not evidence that nothing is pending.
-Resume without repeating completed onboarding or bypassing a pending Design or
-Implementation checkpoint.
-Set `Learning mode: active` if the user is resuming paused learning. If onboarding
-is incomplete, ask only the unanswered questions. Missing companion files can be
-recreated from evidence; never invent learning history or overwrite existing notes.
+2. Use the returned absolute paths, not paths inferred from this document. A null result means invalid or linked state. Explain the problem and stop state setup; do not select another directory.
 
-If no profile exists, read [onboarding.md](onboarding.md) and run onboarding.
-Use [state-templates.md](state-templates.md) when creating state. These files are
-local Markdown maintained with normal file tools; there is no service to call.
+   - `kind: legacy` keeps an existing local profile in place. `profile` and `project` point to the same file. Keep its combined onboarding format. Never migrate, merge, or reset notes automatically.
+   - `kind: shared` uses a global learner `profile`, project settings in `project`, a project `map`, and worktree-local `progress`.
+   - The resolver uses `$XDG_CONFIG_HOME/vibe-wise`, or `~/.config/vibe-wise` when unset or relative. Git's resolved common directory identifies the project. Linked worktrees share settings and the map. Separate clones and submodules stay separate. Without Git, the selected local state root or current directory identifies the project.
+   - Local `.vibe-wise/profile.md` or legacy `.sensible-vibes/profile.md` takes precedence, even when paused. A directory with only progress does not override shared onboarding.
+   - Discovery stops at the nearest Git boundary. Never follow symlinked notes or directories. Recheck before writing.
 
-After setup, continue the user's build task. If none was provided, ask what they
-want to build or change. Invoking this skill again should not reset anything.
+3. Read each existing profile and project file once, then the map. Search the entire existing progress file for pending decisions. Read their full sections and relevant topics before continuing. Resume the recorded checkpoint stage; an initial excerpt does not establish that no decision is pending.
+
+4. Explicit Learn may resume a paused project: set `Learning mode: active` in the resolved project file. Automatic restoration must keep a paused project paused. Global preferences alone never activate an unrelated project.
+
+## Resume or onboard
+
+- Reuse completed global answers and project onboarding. A fresh worktree with no progress file does not need onboarding again.
+- Read [onboarding.md](onboarding.md) when either onboarding record is missing or incomplete. Ask only unanswered questions for that record.
+- Use [state-templates.md](state-templates.md) when creating missing files. Create parent directories only during explicit setup. Preserve existing notes. Recreate missing maps from inspected code, not invented history.
+- After setup, continue the user's task. If none was provided, ask what they want to build or change. Invoking Learn again never resets state.
