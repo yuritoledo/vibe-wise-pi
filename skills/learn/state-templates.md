@@ -1,32 +1,20 @@
-# Local state templates
+# Learning state templates
 
-Create only these three files in the chosen project's `.vibe-wise/`, or its existing
-legacy `.sensible-vibes/` when resuming. Use the directory selected by SKILL.md.
-Replace bracketed values with actual evidence or “Not specified.” Keep the two
-status lines unformatted and near the top; the restoration hook reads them.
-Do not replace existing state with a fresh template.
+- Use the absolute paths returned by the resolver in SKILL.md.
+- In shared mode, keep personal experience and preferences in `profile`. Keep project familiarity and goals in `project`. Keep decisions and learning events in local `progress`.
+- In legacy mode, keep the existing combined `profile.md` format. Put the Project and Goals sections below in that profile, not in a new project file.
+- Replace bracketed values with evidence or “Not specified.” Keep status lines unformatted near the top.
+- Create only missing files. Update existing entries without replacing other notes.
 
-## profile.md
+## Global profile (shared mode)
 
 ```markdown
 # Learner Profile
 
-Learning mode: active
 Onboarding: complete
-
-## Project
-Situation: [New / Existing / Known]
-Building: [project purpose]
-Codebase familiarity: [answer]
-Learning scope: [entire system / parts we touch / mixed]
 
 ## Experience
 Overall programming: [Beginner / Intermediate / Advanced, or Not specified]
-Stack familiarity: [per-technology levels if given; otherwise Not specified]
-
-## Goals
-Primary: [answer]
-Capability goal: [optional answer]
 
 ## Preferences
 Checkpoint frequency: Normal
@@ -41,6 +29,29 @@ None recorded yet.
 
 ## Revisit
 None recorded yet.
+```
+
+## Project settings
+
+- Shared mode stores these fields in the resolved `project` file.
+- Legacy mode stores these fields in its combined profile.
+
+```markdown
+# Project Settings
+
+Learning mode: active
+Onboarding: complete
+
+## Project
+Situation: [New / Existing / Known]
+Building: [project purpose]
+Codebase familiarity: [answer]
+Learning scope: [entire system / parts we touch / mixed]
+Stack familiarity: [per-technology levels if given; otherwise Not specified]
+
+## Goals
+Primary: [answer]
+Capability goal: [optional answer]
 ```
 
 ## progress.md
@@ -60,8 +71,9 @@ topic independently readable so it can be loaded without the whole file.
 While waiting on a checkpoint, keep a short `## Pending decision` section
 with the proposed approach and what reply is awaited. Remove it once resolved.
 Include the checkpoint's decision name and stage: awaiting reasoning, choice
-confirmation, or implementation approval. Record confirmed choices in the map
-without claiming they are implemented. Keep any proposed coding scope explicit.
+confirmation, or implementation approval. Record confirmed choices and proposed
+coding scope in this worktree's progress. Update the shared map only after
+verifying implemented code; include branch and commit evidence for branch-specific facts.
 Confirmation covers only the proposal presented. Don't append unmentioned fields,
 behaviors, rejected alternatives, or reasons to the chosen design. Mark unresolved
 details unknown and the coding agent's suggestions proposed; never attribute them to the learner.
@@ -81,9 +93,9 @@ details unknown and the coding agent's suggestions proposed; never attribute the
 [Components, responsibilities, and supporting file paths.]
 
 ## Main Flow
-[Compact text diagram with labeled arrows. Mark unknowns and distinguish proposed,
-chosen, and implemented components. Reflect the learner's model refined together,
-or verified existing code; don't fill missing relationships with assumed designs.]
+[Compact text diagram with labeled arrows. Reflect verified existing code.
+Keep proposals and chosen but unimplemented designs in worktree progress.
+Do not fill missing relationships with assumed designs.]
 
 ## Data and Trust Boundaries
 [Storage, ownership, auth, external services; unknown when unverified.]

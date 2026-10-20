@@ -22,7 +22,8 @@ the result while keeping ownership of the decisions.
 ## Install for Pi
 
 You need [Pi](https://pi.dev) and [Python 3](https://www.python.org/downloads/).
-Python runs the confirmed reset helper. It needs no extra Python packages.
+Python runs state resolution, session restoration, and the confirmed reset helper.
+It needs no extra Python packages.
 
 Install the public package from npm:
 
@@ -227,19 +228,33 @@ are with the stack. Checkpoint frequency—Light, Normal, or Frequent—is separ
 - “Just implement this one.”
 - “Pause learning.” Resume with `/skill:learn` in Pi or `/vibe-wise:learn` in Claude Code.
 
-Preferences, learning notes, and a project map live in `.vibe-wise/` in your project.
-Learning mode resumes in future sessions and after compaction. Add `.vibe-wise/` to
-your `.gitignore` to keep your notes out of Git; VibeWise will not change it silently.
+Learning notes use three scopes:
+
+- Personal preferences and general experience: `~/.config/vibe-wise/profile.md`.
+- Project onboarding and verified project map: `~/.config/vibe-wise/projects/<key>/`.
+- Task progress and pending approvals: `.vibe-wise/progress.md` in each worktree.
+
+An absolute `XDG_CONFIG_HOME` replaces `~/.config`. The key comes from Git's common
+directory. Linked worktrees share onboarding; separate clones do not. A new
+worktree restores project knowledge without importing another worktree's approvals.
+
+Learning mode resumes in future sessions and after compaction. Existing local
+profiles in `.vibe-wise/` or `.sensible-vibes/` keep their local behavior. VibeWise
+does not move or merge them automatically. Add `.vibe-wise/` to your `.gitignore`
+to keep task notes out of Git; VibeWise will not change it silently.
 
 No extra account, backend, or telemetry. Saved notes enter the coding agent's context,
 so the data settings of your selected model provider and host apply.
 
 To start learning this project from scratch, run `/skill:reset` in Pi or
 `/vibe-wise:reset` in Claude Code. It shows the project and asks **Cancel / Reset
-learning**. After confirmation, it backs up your profile, progress, and project map
-inside the notes directory's `backups/` folder, then restarts onboarding. Source code
-and other projects stay untouched. To change your experience level or preferences,
-just tell the coding agent; no reset is needed.
+learning**. After confirmation, it backs up and resets project onboarding, the
+project map, and this worktree's progress. Shared project notes affect all linked
+worktrees; global preferences and other worktrees' progress stay intact. With a
+legacy local profile, reset backs up and clears that local profile, progress, and
+map instead. Backups stay under the local notes directory's `backups/` folder.
+Source code and other projects stay untouched. To change your experience level or
+preferences, tell the coding agent; no reset is needed.
 
 ## Updating
 

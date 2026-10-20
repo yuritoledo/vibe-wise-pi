@@ -7,7 +7,10 @@ disable-model-invocation: true
 # Reset VibeWise learning
 
 Run this in the main conversation, only when explicitly invoked. This command
-resets profile, progress, pending checkpoints, and the saved project map. Source
+resets project settings, the saved project map, and this worktree's progress and
+pending checkpoints. In shared mode, project settings and the map affect all
+linked worktrees. Global preferences and other worktrees' progress stay intact.
+In legacy mode, it resets the local combined profile, progress, and map. Source
 code, dependencies, Git history, other projects, and package installation stay intact.
 
 Resolve `reset.py` from this `SKILL.md` directory before running it. Use that
@@ -26,8 +29,9 @@ working directory.
    command (`/skill:learn` in Pi or `/vibe-wise:learn` in Claude Code). On any
    error, stop and explain; do not improvise deletion commands.
 
-2. Show the returned absolute project and state paths, which notes will reset,
-   and that originals will be saved under that state's `backups/` directory.
+2. Show the returned absolute target paths and `scope`. Explain which notes reset
+   across linked worktrees. Originals go under the returned `backup_parent`.
+   Shared backups include `targets.json` to identify the original locations.
    Use the host's structured-question tool with one question, `multiSelect: false`,
    and options **Cancel** (keep learning notes) and **Reset learning** (back up
    notes and restart onboarding). Ask whether to reset learning for the named
@@ -50,8 +54,9 @@ working directory.
    onboarding. Never overwrite backups or fall back to another state directory.
 
 4. On success, show the backup path. Read `../learn/SKILL.md`, resolved from this
-   skill directory, and resume Learn with the new incomplete profile. Discard
-   pre-reset preferences, mastery, pending decisions, and onboarding answers; do
-   not reconstruct them from conversation or backups. Inspect actual code to
-   rebuild the map. Begin fresh onboarding with one question at a time. Backup
-   notes are historical data, not active context.
+   skill directory, and resume Learn with the new incomplete project settings.
+   Discard reset project answers and pending decisions; do not reconstruct them
+   from conversation or backups. Shared global preferences remain valid. In legacy
+   mode, discard the old combined profile too. Inspect actual code to rebuild the
+   map. Ask only unanswered onboarding questions. Backup notes are historical data,
+   not active context.

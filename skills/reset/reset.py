@@ -13,7 +13,7 @@ import tempfile
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hooks"))
-from session_start import state_directory
+from state import resolve_state, safe_path
 
 
 FRESH = {
@@ -28,26 +28,39 @@ FRESH = {
 }
 
 
+def reset_targets(cwd):
+    files = resolve_state(cwd)
+    if files is None:
+        return None, {}
+    state = Path(files["state"])
+    if files["kind"] == "legacy":
+        return state, {name: (state / name, text) for name, text in FRESH.items()}
+    return state, {
+        "project.md": (Path(files["project"]), "# Project Settings\n\nLearning mode: active\nOnboarding: incomplete\nOnboarding reset: pending\nRemaining onboarding: Project familiarity, stack familiarity, and goals.\n"),
+        "project-map.md": (Path(files["map"]), FRESH["project-map.md"]),
+        "progress.md": (Path(files["progress"]), FRESH["progress.md"]),
+    }
+
+
 def snapshot(cwd):
-    state = state_directory(cwd)
+    state, targets = reset_targets(cwd)
     if state is None:
         return None, {}, None
     notes = {}
-    for name in FRESH:
-        path = state / name
+    digest = hashlib.sha256(str(state).encode())
+    for name, (path, _text) in targets.items():
+        if not safe_path(path):
+            raise ValueError("Refusing to reset non-regular note: " + str(path))
         try:
             mode = path.lstat().st_mode
         except FileNotFoundError:
-            continue
-        if not stat.S_ISREG(mode):
-            raise ValueError("Refusing to reset non-regular note: " + str(path))
-        notes[name] = path.read_bytes()
-    # Include identity, missing files, and content so confirmation cannot drift
-    # to another project or silently discard notes updated by another session.
-    digest = hashlib.sha256(str(state).encode())
-    for name in FRESH:
-        data = notes.get(name)
-        digest.update(json.dumps([name, None if data is None else data.hex()]).encode())
+            data = None
+        else:
+            if not stat.S_ISREG(mode):
+                raise ValueError("Refusing to reset non-regular note: " + str(path))
+            data = path.read_bytes()
+            notes[name] = data
+        digest.update(json.dumps([str(path), None if data is None else data.hex()]).encode())
     return state, notes, digest.hexdigest()
 
 
@@ -61,9 +74,12 @@ def reset(cwd, confirmation=None):
         raise ValueError("Target or notes changed. Preview and confirm again; nothing reset.")
     if not notes:
         return {"status": "no_notes", "cwd": str(cwd)}
+    targets = reset_targets(cwd)[1]
     result = {
         "status": "preview", "project": str(state.parent), "state": str(state),
         "files": list(notes), "backup_parent": str(state / "backups"),
+        "targets": {name: str(path) for name, (path, _text) in targets.items()},
+        "scope": "project settings and map (all linked worktrees), and current worktree progress; global preferences stay unchanged" if "project.md" in targets else "local learning notes",
         "confirmation": fingerprint,
     }
     if confirmation is None:
@@ -72,24 +88,35 @@ def reset(cwd, confirmation=None):
     backup_parent = state / "backups"
     if backup_parent.is_symlink() or (backup_parent.exists() and not backup_parent.is_dir()):
         raise ValueError("Backup path must be a real directory; nothing reset.")
-    backup_parent.mkdir(mode=0o700, exist_ok=True)
+    backup_parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     prefix = datetime.now(timezone.utc).strftime("reset-%Y%m%dT%H%M%SZ-")
     backup = Path(tempfile.mkdtemp(prefix=prefix, dir=backup_parent))
+    replacements = {}
     try:
         # Finish all backups and prepare replacements before touching active notes.
         for name, data in notes.items():
             (backup / name).write_bytes(data)
-        for name, text in FRESH.items():
-            (backup / (".new-" + name)).write_text(text, encoding="utf-8")
+        if "project.md" in targets:
+            (backup / "targets.json").write_text(json.dumps(result["targets"], indent=2), encoding="utf-8")
+        for name, (path, text) in targets.items():
+            path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            # Stage beside the target: shared config may be on a different volume.
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                             prefix=".reset-", delete=False) as staged:
+                replacements[name] = Path(staged.name)
+                staged.write(text)
         if snapshot(cwd)[2] != fingerprint:
             raise ValueError("Notes changed during backup; active notes were not reset.")
-        for name in FRESH:
-            os.replace(backup / (".new-" + name), state / name)
+        for name, (path, _text) in targets.items():
+            os.replace(replacements[name], path)
     except (OSError, ValueError) as error:
         raise ValueError(
             "Reset did not complete. Backup location: {}. "
             "Check active notes before continuing. {}".format(backup, error)
         ) from error
+    finally:
+        for staged in replacements.values():
+            staged.unlink(missing_ok=True)
     return {"status": "reset", "project": str(state.parent),
             "state": str(state), "backup": str(backup)}
 
